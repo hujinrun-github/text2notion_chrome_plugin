@@ -1,0 +1,23 @@
+{
+    "manifest_version": 2,
+    "name": "Notion Data Transfer",
+    "version": "1.0",
+    "description": "Transfer data to Notion",
+    "permissions": ["activeTab",
+        "storage",
+        "https://api.notion.com/*"
+    ],
+    "content_scripts": [{
+        "matches": ["<all_urls>"],
+        "js": ["js/content.js"]
+    }],
+    "background": {
+        "scripts": ["js/background.js"],
+        "persistent": false
+    },
+    "browser_action": {
+        "default_icon": "icon.png",
+        "default_popup": "html/popup.html",
+        "default_title": "Transfer data to Notion"
+    }
+}
