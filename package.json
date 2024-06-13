@@ -1,0 +1,8 @@
+{
+    "name": "text2notion",
+    "version": "1.0.0",
+    "description": "将文本发送到notion",
+    "dependencies": {
+        "@notionhq/client": "^2.2.7"
+    }
+}
