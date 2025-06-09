@@ -2,11 +2,13 @@
     "manifest_version": 3,
     "name": "Notion Data Transfer",
     "version": "1.0",
-    "description": "Transfer data to Notion",
+    "description": "Transfer data to Notion2",
     "permissions": [
         "activeTab",
         "storage",
-        "contextMenus"
+        "contextMenus",
+        "scripting",
+        "tabs"
     ],
     "icons": {
         "16": "images/icon-16.png",
@@ -16,7 +18,8 @@
     },
     "content_scripts": [{
         "matches": ["<all_urls>"],
-        "js": ["scripts/content.js"]
+        "js": ["scripts/content.js"],
+        "run_at": "document_start"
     }],
 
     "background": {
@@ -27,5 +30,8 @@
         "default_icon": "images/icon-16.png",
         "default_popup": "popup/popup.html",
         "default_title": "Transfer data to Notion"
-    }
+    },
+    "host_permissions": [
+    "<all_urls>"
+    ]
 }
