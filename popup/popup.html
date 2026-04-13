@@ -1,11 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
   <head>
-    <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notion Web Clipper</title>
+    <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <h1>Transfer data to Notion</h1>
-   <button id="transferButton">Transfer</button>
-   <script src="popup.js"></script>
+    <!-- 未登录状态：默认可见，JS 登录后才隐藏 -->
+    <div id="view-unauthenticated" class="view">
+      <div class="brand">
+        <img src="../images/icon-48.png" alt="Notion Web Clipper" width="32" height="32" />
+        <span class="brand-name">Notion Clipper</span>
+      </div>
+      <p class="description">将网页内容一键保存到 Notion Database</p>
+      <button id="btn-connect" class="btn btn-primary" aria-label="连接 Notion 账号">
+        连接 Notion
+      </button>
+    </div>
+
+    <!-- 已登录状态 -->
+    <div id="view-authenticated" class="view" hidden>
+      <header class="header">
+        <div class="workspace">
+          <img src="../images/icon-16.png" alt="" width="20" height="20" aria-hidden="true" />
+          <span class="workspace-name">Notion Clipper</span>
+        </div>
+        <button class="btn-icon" id="btn-settings" aria-label="打开设置">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M8 10a2 2 0 100-4 2 2 0 000 4z" fill="currentColor"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M8 1a.75.75 0 01.75.75v.787a5.266 5.266 0 011.596.661l.556-.556a.75.75 0 111.06 1.06l-.555.557c.285.494.488 1.04.582 1.616H12.75a.75.75 0 010 1.5h-.761a5.268 5.268 0 01-.582 1.617l.556.556a.75.75 0 11-1.06 1.06l-.557-.555a5.267 5.267 0 01-1.596.661v.787a.75.75 0 01-1.5 0v-.787a5.268 5.268 0 01-1.596-.661l-.556.556a.75.75 0 11-1.06-1.06l.555-.557A5.267 5.267 0 013.761 8.75H3a.75.75 0 010-1.5h.761a5.267 5.267 0 01.582-1.616l-.556-.557a.75.75 0 011.06-1.06l.557.556a5.267 5.267 0 011.596-.661V1.75A.75.75 0 018 1z" fill="currentColor"/>
+          </svg>
+        </button>
+      </header>
+
+      <section class="section">
+        <label class="field-label" for="select-database">默认数据库</label>
+        <div class="select-wrapper">
+          <select id="select-database" name="database" autocomplete="off" aria-label="选择默认数据库">
+          </select>
+        </div>
+      </section>
+
+      <section class="section last-saved" id="section-last-saved" hidden>
+        <p class="section-title">上次保存</p>
+        <a id="last-saved-link" href="#" target="_blank" rel="noopener noreferrer" class="last-saved-link">
+          <span id="last-saved-title" class="last-saved-title"></span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M3.5 3a.5.5 0 000 1H7.293L2.146 9.146a.5.5 0 10.708.708L8 4.707V8.5a.5.5 0 001 0v-5a.5.5 0 00-.5-.5h-5z" fill="currentColor"/>
+          </svg>
+        </a>
+      </section>
+
+    </div>
+
+    <!-- status-message 在两个 view 外部，任何状态下都能显示 -->
+    <div aria-live="polite" id="status-message" class="status-message" hidden></div>
+
+    <script src="popup.js"></script>
   </body>
 </html>
