@@ -1,12 +1,12 @@
 {
     "manifest_version": 3,
-    "name": "Notion Data Transfer",
+    "name": "Notion Web Clipper",
     "version": "1.0",
-    "description": "Transfer data to Notion2",
+    "description": "选中文字，右键保存到 Notion Database",
     "permissions": [
-        "activeTab",
         "storage",
         "contextMenus",
+        "activeTab",
         "scripting",
         "tabs"
     ],
@@ -16,12 +16,16 @@
         "48": "images/icon-48.png",
         "128": "images/icon-128.png"
     },
+    "options_ui": {
+        "page": "options/options.html",
+        "open_in_tab": true
+    },
     "content_scripts": [{
         "matches": ["<all_urls>"],
+        "css": ["content/toast.css"],
         "js": ["scripts/content.js"],
-        "run_at": "document_start"
+        "run_at": "document_idle"
     }],
-
     "background": {
         "service_worker": "background.js",
         "type": "module"
@@ -29,9 +33,9 @@
     "action": {
         "default_icon": "images/icon-16.png",
         "default_popup": "popup/popup.html",
-        "default_title": "Transfer data to Notion"
+        "default_title": "Notion Web Clipper"
     },
     "host_permissions": [
-    "<all_urls>"
+        "<all_urls>"
     ]
 }

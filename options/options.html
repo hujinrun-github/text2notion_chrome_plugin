@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notion Clipper · 设置</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <a href="#main" class="skip-link">跳到主要内容</a>
+
+    <div class="layout">
+      <!-- 侧边栏 -->
+      <nav class="sidebar" aria-label="设置导航">
+        <div class="sidebar-brand">
+          <img src="../images/icon-32.png" alt="Notion Clipper" width="24" height="24" />
+          <span>Notion Clipper</span>
+        </div>
+        <ul class="nav-list" role="list">
+          <li>
+            <a href="#account" class="nav-item active" aria-current="page">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M8 8a3 3 0 100-6 3 3 0 000 6zm-4.5 6a4.5 4.5 0 019 0H3.5z" fill="currentColor"/>
+              </svg>
+              账号
+            </a>
+          </li>
+          <li>
+            <a href="#databases" class="nav-item">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M8 1C4.5 1 2 2.343 2 4s2.5 3 6 3 6-1.343 6-3-2.5-3-6-3zM2 6.5v3C2 11.157 4.5 12.5 8 12.5s6-1.343 6-3v-3c0 1.657-2.5 3-6 3s-6-1.343-6-3zm0 5v1C2 14.157 4.5 15.5 8 15.5s6-1.343 6-3v-1c0 1.657-2.5 3-6 3s-6-1.343-6-3z" fill="currentColor"/>
+              </svg>
+              数据库
+            </a>
+          </li>
+          <li>
+            <a href="#mapping" class="nav-item">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M2 4.5A1.5 1.5 0 013.5 3h9A1.5 1.5 0 0114 4.5v7a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 11.5v-7zm1.5-.5a.5.5 0 00-.5.5v7a.5.5 0 00.5.5h9a.5.5 0 00.5-.5v-7a.5.5 0 00-.5-.5h-9z" fill="currentColor"/>
+                <path d="M5 7h6M5 9.5h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+              </svg>
+              字段映射
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- 主内容 -->
+      <main id="main" class="main">
+
+        <!-- 账号 -->
+        <section id="account" class="settings-section">
+          <h1 class="section-heading">账号</h1>
+
+          <!-- 未登录 -->
+          <div id="account-unauthenticated" class="card" hidden>
+            <p class="card-description">输入你的 Notion API Token 来连接账号。</p>
+            <div class="field-group">
+              <label for="token-input" class="field-label">Notion API Token</label>
+              <div class="input-row">
+                <input
+                  id="token-input"
+                  type="password"
+                  name="notion-token"
+                  autocomplete="off"
+                  placeholder="ntn_***"
+                  aria-label="输入 Notion API Token"
+                />
+                <button id="btn-save-token" class="btn btn-primary" aria-label="保存 Token">
+                  保存
+                </button>
+              </div>
+              <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">
+                获取方法：前往 <a href="https://www.notion.so/profile/integrations" target="_blank" rel="noopener noreferrer">Notion Integrations</a>，创建内部集成，复制 API Token。
+              </p>
+            </div>
+          </div>
+
+          <!-- 已登录 -->
+          <div id="account-authenticated" class="card" hidden>
+            <div class="account-info">
+              <div class="account-avatar">
+                <img id="account-icon" src="../images/icon-48.png" alt="Connected" width="40" height="40" />
+              </div>
+              <div class="account-meta">
+                <p id="account-workspace" class="account-workspace"></p>
+                <p class="account-status">
+                  <span class="status-dot"></span>
+                  已连接
+                </p>
+              </div>
+              <button id="btn-disconnect" class="btn btn-danger-outline" aria-label="断开 Notion 连接">
+                断开连接
+              </button>
+            </div>
+          </div>
+
+          <div aria-live="polite" id="token-status" class="status-bar" hidden></div>
+        </section>
+
+        <!-- 数据库 -->
+        <section id="databases" class="settings-section">
+          <div class="section-header">
+            <h2 class="section-heading">数据库</h2>
+            <button id="btn-refresh-dbs" class="btn btn-secondary btn-sm" aria-label="从 Notion 重新拉取数据库列表">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path d="M2 7a5 5 0 018.66-2.5M12 7a5 5 0 01-8.66 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <path d="M10.5 2.5L10.66 4.5 8.66 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              同步
+            </button>
+          </div>
+
+          <div id="db-list" class="db-list" role="list" aria-label="已配置的数据库列表">
+            <!-- JS 动态填充 -->
+          </div>
+
+          <div id="db-empty" class="empty-state" hidden>
+            <p>还没有数据库</p>
+            <p class="text-muted">
+              请先在 Notion 中打开目标数据库页面，点击右上角「…」→「连接」→ 找到本插件并添加，
+              然后回到这里点击「同步」。<br />
+              或者直接在下方输入 Database ID 手动添加。
+            </p>
+          </div>
+
+          <div class="add-db-form">
+            <label for="input-db-id" class="field-label">手动添加 Database ID</label>
+            <div class="input-row">
+              <input
+                id="input-db-id"
+                type="text"
+                name="database-id"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…"
+                aria-label="输入 Notion Database ID"
+              />
+              <button id="btn-add-db" class="btn btn-secondary" aria-label="添加数据库">添加</button>
+            </div>
+          </div>
+
+          <div class="field-group" style="margin-top: 1rem">
+            <label class="checkbox-label" style="display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="chk-auto-create-fields" style="margin-top: 0.25rem;" />
+              <span>保存时自动创建数据库中缺失的字段（如 Source URL、Captured At 等）</span>
+            </label>
+          </div>
+
+          <div aria-live="polite" id="db-status" class="status-bar" hidden></div>
+        </section>
+
+        <!-- 字段映射 -->
+        <section id="mapping" class="settings-section">
+          <h2 class="section-heading">字段映射</h2>
+          <p class="section-description">为每个数据库独立配置字段映射模板。</p>
+
+          <div class="field-group">
+            <label for="select-mapping-db" class="field-label">选择数据库</label>
+            <div class="select-wrapper">
+              <select id="select-mapping-db" name="mapping-database" autocomplete="off" aria-label="选择要配置映射的数据库">
+              </select>
+            </div>
+          </div>
+
+          <div id="mapping-config" hidden>
+            <fieldset class="template-group">
+              <legend class="field-label">映射模板</legend>
+              <div class="radio-group">
+                <label class="radio-item">
+                  <input type="radio" name="template" value="preset-a" />
+                  <span>📚 标准阅读收藏</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="template" value="preset-b" />
+                  <span>💼 工作笔记</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="template" value="preset-c" />
+                  <span>💡 灵感素材库</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="template" value="custom" />
+                  <span>自定义</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <!-- 自定义映射（custom 时显示） -->
+            <div id="custom-mapping" class="custom-mapping" hidden>
+              <table class="mapping-table" aria-label="自定义字段映射">
+                <thead>
+                  <tr>
+                    <th scope="col">插件字段</th>
+                    <th scope="col">Notion 字段名</th>
+                    <th scope="col">启用</th>
+                  </tr>
+                </thead>
+                <tbody id="mapping-tbody">
+                  <!-- JS 动态填充 -->
+                </tbody>
+              </table>
+            </div>
+
+            <button id="btn-save-mapping" class="btn btn-primary">保存映射</button>
+          </div>
+
+          <div aria-live="polite" id="mapping-status" class="status-bar" hidden></div>
+        </section>
+
+      </main>
+    </div>
+
+    <script src="options.js"></script>
+  </body>
+</html>

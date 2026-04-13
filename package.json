@@ -2,7 +2,20 @@
     "name": "text2notion",
     "version": "1.0.0",
     "description": "将文本发送到notion",
+    "type": "module",
     "dependencies": {
         "@notionhq/client": "^2.2.7"
+    },
+    "scripts": {
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage",
+        "test:worker": "cd oauth-worker && npx vitest run"
+    },
+    "devDependencies": {
+        "@testing-library/dom": "^10.4.1",
+        "@vitest/coverage-v8": "^4.1.3",
+        "jsdom": "^24.1.3",
+        "vitest": "^3.2.4"
     }
 }
