@@ -410,6 +410,60 @@
   white-space: nowrap;
 }
 
+/* ===== 模式切换 ===== */
+.nc-mode-group {
+  display: flex;
+  gap: 12px;
+  padding-bottom: 6px;
+}
+
+.nc-mode-radio {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--toast-text-secondary);
+  cursor: pointer;
+}
+
+.nc-mode-radio input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.nc-mode-radio span {
+  user-select: none;
+}
+
+/* ===== 新建/追加区域 ===== */
+.nc-create-section,
+.nc-append-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ===== 可编辑标题 ===== */
+.nc-title-input {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--toast-text);
+  background: var(--toast-bg);
+  border: 1px solid var(--toast-border);
+  border-radius: 6px;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  box-sizing: border-box;
+}
+
+.nc-title-input:focus-visible {
+  border-color: var(--toast-accent);
+  box-shadow: 0 0 0 2px rgba(35, 131, 226, 0.2);
+}
+
 /* ===== 可编辑内容 textarea ===== */
 .nc-content-textarea {
   width: 100%;

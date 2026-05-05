@@ -33,6 +33,7 @@ beforeEach(() => {
     const defaults = {
       notionDatabases: [{ id: 'db1', name: 'DB One' }],
       notionDefaultDatabase: 'db1',
+      lastSaved: { databaseId: 'db1' },
     };
     if (Array.isArray(keys)) {
       const result = {};

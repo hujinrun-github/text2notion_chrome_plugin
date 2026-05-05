@@ -19,7 +19,7 @@ import {
   PRESET_MAPPINGS,
 } from './utils/config.js';
 
-import { fetchDatabases, createPage, updatePage, buildProperties, ensureDatabaseProperties, getDatabaseSchema, getDatabaseTags } from './utils/notion-api.js';
+import { fetchDatabases, createPage, updatePage, buildProperties, ensureDatabaseProperties, getDatabaseSchema, getDatabaseTags, fetchDatabasePages, appendBlocks } from './utils/notion-api.js';
 
 // ─────────────────────────────────────────────────────────────
 // 右键菜单注册
@@ -28,7 +28,7 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: CONTEXT_MENU_ID,
     title: '保存到 Notion',
-    contexts: ['selection'],
+    contexts: ['selection', 'image'],
   });
 });
 
@@ -45,6 +45,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       selectionText: info.selectionText,
       pageUrl: info.pageUrl,
       pageTitle: tab.title,
+      // 右键点击图片时，附带图片 URL
+      mediaType: info.mediaType,
+      srcUrl: info.srcUrl,
     },
     () => {
       // 消费 lastError，避免 "Unchecked runtime.lastError" 控制台警告。
@@ -83,6 +86,18 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       );
       return true;
 
+    case 'fetchDatabasePages':
+      handleFetchDatabasePages(message, sendResponse).catch(err =>
+        sendResponse({ pages: [], error: err.message })
+      );
+      return true;
+
+    case 'appendToPage':
+      handleAppendToPage(message, sendResponse).catch(err =>
+        sendResponse({ success: false, error: err.message })
+      );
+      return true;
+
     default:
       return false;
   }
@@ -113,7 +128,7 @@ async function handleFetchDatabases(sendResponse) {
 // Handler: saveToNotion
 // ─────────────────────────────────────────────────────────────
 async function handleSaveToNotion(message, sendResponse) {
-  const { databaseId, selectedText, pageUrl, pageTitle } = message;
+  const { databaseId, selectedText, contentBlocks, pageUrl, pageTitle } = message;
 
   try {
     const storage = await chrome.storage.local.get([
@@ -148,18 +163,34 @@ async function handleSaveToNotion(message, sendResponse) {
 
     const autoCreateFields = storage[STORAGE_KEY_AUTO_CREATE_FIELDS] || false;
 
+    // content 属性只写摘要（前 100 字），完整内容通过 contentBlocks 写入页面正文
+    const summary = selectedText.length > 100
+      ? selectedText.slice(0, 100) + '…'
+      : selectedText;
+
     const fields = {
       title: pageTitle || pageUrl || '未命名',
-      content: selectedText,
+      content: summary,
       sourceUrl: pageUrl,
       capturedAt: new Date().toISOString(),
       tags: message.tags || [],
       notes: message.notes || '',
     };
 
+    // contentBlocks 由 content.js 转换后传入（Service Worker 没有 DOMParser）
+    // 回退：纯文本作为单个段落
+    const blocks = contentBlocks || [{
+      object: 'block',
+      type: 'paragraph',
+      paragraph: {
+        rich_text: [{ type: 'text', text: { content: selectedText || '' } }],
+      },
+    }];
+
     const page = await createPage(token, databaseId, fields, {
       fieldMapping,
       autoCreateFields,
+      contentBlocks: blocks,
     });
 
     const lastSaved = {
@@ -308,5 +339,62 @@ async function handleFetchDatabaseTags(message, sendResponse) {
     sendResponse({ tags });
   } catch (err) {
     sendResponse({ tags: [], error: err.message });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Handler: fetchDatabasePages
+// ─────────────────────────────────────────────────────────────
+async function handleFetchDatabasePages(message, sendResponse) {
+  const { databaseId } = message;
+
+  try {
+    const storage = await chrome.storage.local.get(STORAGE_KEY_TOKEN);
+    const token = storage[STORAGE_KEY_TOKEN];
+
+    if (!token) {
+      sendResponse({ pages: [], error: '未登录' });
+      return;
+    }
+
+    const pages = await fetchDatabasePages(token, databaseId);
+    sendResponse({ pages });
+  } catch (err) {
+    sendResponse({ pages: [], error: err.message });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Handler: appendToPage
+// ─────────────────────────────────────────────────────────────
+async function handleAppendToPage(message, sendResponse) {
+  const { pageId, contentBlocks, selectedText } = message;
+
+  try {
+    const storage = await chrome.storage.local.get(STORAGE_KEY_TOKEN);
+    const token = storage[STORAGE_KEY_TOKEN];
+
+    if (!token) {
+      sendResponse({ success: false, error: '未登录，请先连接 Notion' });
+      return;
+    }
+
+    // contentBlocks 由 content.js 转换后传入
+    const blocks = contentBlocks || [{
+      object: 'block',
+      type: 'paragraph',
+      paragraph: {
+        rich_text: [{ type: 'text', text: { content: selectedText || '' } }],
+      },
+    }];
+
+    // 分批追加（每批最多 100 个 block）
+    for (let i = 0; i < blocks.length; i += 100) {
+      await appendBlocks(token, pageId, blocks.slice(i, i + 100));
+    }
+
+    sendResponse({ success: true, pageId });
+  } catch (err) {
+    sendResponse({ success: false, error: err.message });
   }
 }

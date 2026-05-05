@@ -839,3 +839,22 @@ if (!data.access_token) {
 - `background.js` → `handleFetchDatabaseTags` 消息处理 + `resolveFieldMapping` 辅助函数
 
 **影响文件：** `utils/notion-api.js`、`background.js`、`scripts/content.js`、`content/toast.css`
+
+---
+
+### 功能增强：富文本保留 + 多模态 + 追加到已有页面（2026-04-14）
+
+**改动：**
+1. **富文本保留**：content.js 通过 `window.getSelection().getRangeAt(0).cloneContents()` 获取选区 HTML，而非纯文本。新建 `utils/html-to-blocks.js` 将 HTML DOM 递归转换为 Notion block 数组，支持段落、标题(h1~h6)、有序/无序列表、代码块、引用、图片、表格、链接、分割线、行内格式（粗体/斜体/代码/下划线/删除线）。
+2. **图片处理**：同域图片通过 canvas 转 data URL 兜底；跨域图片保留原始 URL；相对路径自动解析为绝对 URL。
+3. **追加到已有页面**：Toast 新增模式切换（新建/追加），追加模式下选择目标页面后通过 `PATCH /blocks/{pageId}/children` 追加内容。
+
+**新增文件：**
+- `utils/html-to-blocks.js` — HTML → Notion blocks 转换器
+
+**新增 API：**
+- `utils/notion-api.js` → `fetchDatabasePages(token, databaseId)` — 获取数据库中的页面列表
+- `utils/notion-api.js` → `appendBlocks(token, pageId, blocks)` — 追加 blocks 到已有页面
+- `background.js` → `handleFetchDatabasePages`、`handleAppendToPage` 消息处理
+
+**影响文件：** `utils/html-to-blocks.js`（新建）、`utils/notion-api.js`、`background.js`、`scripts/content.js`、`content/toast.css`
