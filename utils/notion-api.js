@@ -217,7 +217,7 @@ export async function fetchDatabases(token) {
  * @returns {Promise<object>}   新建的 Notion Page 对象
  */
 export async function createPage(token, databaseId, fields, options = {}) {
-  const { fieldMapping, autoCreateFields = false } = options;
+  const { fieldMapping, autoCreateFields = false, contentBlocks } = options;
   const { title = '', content = '' } = fields;
 
   // Notion rich_text 单条最大 2000 字符
@@ -249,15 +249,30 @@ export async function createPage(token, databaseId, fields, options = {}) {
     if (autoCreateFields && dbSchema) {
       try {
         await ensureDatabaseProperties(token, databaseId, fieldMapping, dbSchema);
-      } catch (_) {
+      } catch (e) {
+        console.error('[createPage] ensureDatabaseProperties failed:', e.message);
         // 创建字段失败不阻断保存
       }
     }
 
-    // 过滤 fieldMapping：只保留数据库中已有的字段（或 autoCreate 后应该都有了）
+    // 过滤 fieldMapping：只保留数据库中已有的字段
+    // autoCreate 开启时，需要重新获取 schema（因为刚创建了新字段）
     let effectiveMapping = { ...fieldMapping };
-    if (dbSchema && !autoCreateFields) {
-      const existingNames = new Set(Object.keys(dbSchema));
+    if (dbSchema) {
+      let currentSchema = dbSchema;
+      if (autoCreateFields) {
+        // 重新获取 schema，确保包含刚创建的字段
+        try {
+          const refreshRes = await fetch(`${NOTION_API_BASE}/databases/${databaseId}`, {
+            headers: headers(token),
+          });
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            currentSchema = refreshData.properties || dbSchema;
+          }
+        } catch (_) {}
+      }
+      const existingNames = new Set(Object.keys(currentSchema));
       effectiveMapping = {};
       for (const [key, propName] of Object.entries(fieldMapping)) {
         if (existingNames.has(propName) || FIELD_TYPES[key] === 'title') {
@@ -282,18 +297,24 @@ export async function createPage(token, databaseId, fields, options = {}) {
     };
   }
 
+  // 使用 contentBlocks（富文本 blocks），或回退到纯文本段落
+  // Notion API 单次最多 100 个 children，超出部分需后续追加
+  const allBlocks = contentBlocks || [
+    {
+      object: 'block',
+      type: 'paragraph',
+      paragraph: {
+        rich_text: [{ type: 'text', text: { content: safeContent } }],
+      },
+    },
+  ];
+  const firstBatch = allBlocks.slice(0, 100);
+  const remaining = allBlocks.slice(100);
+
   const body = {
     parent: { database_id: databaseId },
     properties,
-    children: [
-      {
-        object: 'block',
-        type: 'paragraph',
-        paragraph: {
-          rich_text: [{ type: 'text', text: { content: safeContent } }],
-        },
-      },
-    ],
+    children: firstBatch,
   };
 
   const res = await fetch(`${NOTION_API_BASE}/pages`, {
@@ -302,7 +323,17 @@ export async function createPage(token, databaseId, fields, options = {}) {
     body: JSON.stringify(body),
   });
   await checkResponse(res);
-  return res.json();
+  const page = await res.json();
+
+  // 如果有超过 100 个 block，分批追加
+  if (remaining.length > 0) {
+    for (let i = 0; i < remaining.length; i += 100) {
+      const batch = remaining.slice(i, i + 100);
+      await appendBlocks(token, page.id, batch);
+    }
+  }
+
+  return page;
 }
 
 /**
@@ -317,6 +348,48 @@ export async function updatePage(token, pageId, updates) {
     method: 'PATCH',
     headers: headers(token),
     body: JSON.stringify({ properties: updates }),
+  });
+  await checkResponse(res);
+  return res.json();
+}
+
+/**
+ * 获取数据库中的页面列表（最近编辑的前 50 个）
+ * @param {string} token
+ * @param {string} databaseId
+ * @returns {Promise<Array<{id: string, title: string}>>}
+ */
+export async function fetchDatabasePages(token, databaseId) {
+  const res = await fetch(`${NOTION_API_BASE}/databases/${databaseId}/query`, {
+    method: 'POST',
+    headers: headers(token),
+    body: JSON.stringify({
+      sorts: [{ timestamp: 'last_edited_time', direction: 'descending' }],
+      page_size: 50,
+    }),
+  });
+  await checkResponse(res);
+  const data = await res.json();
+  return data.results.map(page => {
+    // 找到 title 属性
+    const titleProp = Object.values(page.properties || {}).find(p => p.type === 'title');
+    const title = titleProp?.title?.[0]?.plain_text || '未命名';
+    return { id: page.id, title, url: page.url };
+  });
+}
+
+/**
+ * 追加 blocks 到已有页面末尾
+ * @param {string} token
+ * @param {string} pageId
+ * @param {object[]} blocks  Notion block 数组
+ * @returns {Promise<object>}
+ */
+export async function appendBlocks(token, pageId, blocks) {
+  const res = await fetch(`${NOTION_API_BASE}/blocks/${pageId}/children`, {
+    method: 'PATCH',
+    headers: headers(token),
+    body: JSON.stringify({ children: blocks }),
   });
   await checkResponse(res);
   return res.json();

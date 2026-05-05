@@ -23,7 +23,7 @@
     "content_scripts": [{
         "matches": ["<all_urls>"],
         "css": ["content/toast.css"],
-        "js": ["scripts/content.js"],
+        "js": ["utils/html-to-blocks.js", "scripts/content.js"],
         "run_at": "document_idle"
     }],
     "background": {
